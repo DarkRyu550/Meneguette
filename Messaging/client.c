@@ -23,11 +23,11 @@ int main(int argc, char **argv)
 		panic("Could not set the FL of standard input: (%d) %s",
 			errno, strerror(errno));
 
-	stdin_fl = fcntl(socket, F_GETFL);
-	if(stdin_fl < 0)
+	int socket_fl = fcntl(socket, F_GETFL);
+	if(socket_fl < 0)
 		panic("Could not query FL of the socket: (%d) %s",
 			errno, strerror(errno));
-	if(fcntl(socket, F_SETFL, stdin_fl | O_NONBLOCK) < 0)
+	if(fcntl(socket, F_SETFL, socket_fl | O_NONBLOCK) < 0)
 		panic("Could not set the FL of the socket: (%d) %s",
 			errno, strerror(errno));
 		
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 			message_t msg = message_create(sender, msg_buffer);
 			fprintf(stderr, "!! Sending message: %s\n", msg_buffer);
 
-			assert(message_serialize(msg, srl_buffer, 512) == 1);
+            message_serialize(&msg, srl_buffer);
 			if(write(socket, srl_buffer, 512) != 512)
 			{
 				fprintf(stderr, "Wrong write size would cause misaligned \

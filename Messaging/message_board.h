@@ -51,3 +51,11 @@ void message_board_add(message_board* board, const message_t* message);
  */
 bool message_board_poll(message_board* board, size_t* cursor, message_t* message);
 
+/**
+ * Waits until new messages are available on the board. May return spuriously.
+ *
+ * Releases ownership of the board while waiting.
+ *
+ * @param board board to wait for.
+ */
+void message_board_wait(message_board* board);

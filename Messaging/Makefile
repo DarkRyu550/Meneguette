@@ -18,10 +18,12 @@ server: $(OBJS) $(SERVER)
 clean:
 	rm -rf *.o client server
 
-run-client: client
-	./client c1
 run-server: server
 	./server
+run-client-1: client
+	./client c1
+run-client-2: client
+	./client c2
 
-.PHONY: clean all
+.PHONY: clean all run-server run-client-1 run-client-2
 

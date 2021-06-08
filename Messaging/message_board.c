@@ -8,10 +8,12 @@ struct _message_board {
     message_t *messages;
     size_t message_count;
     size_t message_capacity;
+    message_board_key* key;
 };
 
 struct _message_board_key {
     mtx_t lock;
+    cnd_t new_messages;
     message_board board;
 };
 
@@ -23,11 +25,16 @@ message_board_key* message_board_create() {
     if(mtx_init(&k->lock, mtx_plain | mtx_recursive) != thrd_success) {
         panic("Message board lock initialization failed");
     }
+    if(cnd_init(&k->new_messages) != thrd_success) {
+        panic("Message board condition variable initialization failed");
+    }
     k->board.messages = NULL;
     k->board.message_count = 0;
     k->board.message_capacity = 0;
+    k->board.key = k;
     return k;
 }
+
 void message_board_free(message_board_key* key) {
     int res;
     //5 tries to avoid spurious failures
@@ -39,6 +46,8 @@ void message_board_free(message_board_key* key) {
         panic("Failed to acquire mutex for freeing message board (free-while-used?), result=%s", res == thrd_busy ? "busy" : "error");
     }
     mtx_destroy(&key->lock);
+    cnd_destroy(&key->new_messages);
+    free(key->board.messages);
     free(key);
 }
 
@@ -67,6 +76,7 @@ void message_board_add(message_board* board, const message_t* message) {
     }
     memcpy(&board->messages[board->message_count], message, sizeof(message_t));
     board->message_count++;
+    cnd_broadcast(&board->key->new_messages);
 }
 
 bool message_board_poll(message_board* board, size_t* cursor, message_t* message) {
@@ -79,3 +89,8 @@ bool message_board_poll(message_board* board, size_t* cursor, message_t* message
     return true;
 }
 
+void message_board_wait(message_board* board) {
+    while(cnd_wait(&board->key->new_messages, &board->key->lock) != thrd_success) {
+        ; //do nothing
+    }
+}
