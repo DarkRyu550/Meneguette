@@ -12,14 +12,14 @@ typedef struct
 message_t message_create(const char *sender, const char *message);
 
 /* Access the data in the sender field. */
-const char* message_sender(message_t *message);
+const char* message_sender(const message_t *message);
 
 /* Acces the data in the payload field. */
-const char* message_payload(message_t *message);
+const char* message_payload(const message_t *message);
 
 /* Serialize the data of a message into a byte buffer, returning how many 
  * bytes of valid data were written. */
-size_t message_serialize(message_t message, char *buffer, size_t len);
+void message_serialize(const message_t* message, char buffer[512]);
 
 /* Deserialize the data in the given buffe, returning how many messages were
  * successfuly deserialized. */

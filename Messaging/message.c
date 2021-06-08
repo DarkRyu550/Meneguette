@@ -22,46 +22,39 @@ message_t message_create(const char *sender, const char *message)
 }
 
 /* Access the data in the sender field. */
-const char* message_sender(message_t *message)
+const char* message_sender(const message_t *message)
 {
 	return &message->sender[0];
 }
 
 /* Acces the data in the payload field. */
-const char* message_payload(message_t *message)
+const char* message_payload(const message_t *message)
 {
 	return &message->message[0];
 }
 
 /* Serialize the data of a message into a byte buffer, returning how many 
  * bytes of valid data were written. */
-size_t message_serialize(message_t message, char *buffer, size_t len)
+void message_serialize(const message_t* message, char buffer[512])
 {
-	size_t messages = len / 512;
-	size_t offset = 0;
+    size_t offset = 0;
+    size_t str = strlen(&message->sender[0]);
+    for(size_t i = 0; i < 64; ++i)
+    {
+        if(i < str)
+            buffer[offset++] = message->sender[i];
+        else
+            buffer[offset++] = 0;
+    }
 
-	for(size_t c = 0; c < messages; ++c)
-	{
-		size_t str = strlen(&message.sender[0]);
-		for(size_t i = 0; i < 64; ++i)
-		{
-			if(i < str)
-				buffer[offset++] = message.sender[i];
-			else
-				buffer[offset++] = 0;
-		}
-		
-		str = strlen(&message.message[0]);
-		for(size_t i = 0; i < 448; ++i)
-		{
-			if(i < str)
-				buffer[offset++] = message.message[i];
-			else
-				buffer[offset++] = 0;
-		}
-	}
-
-	return messages;
+    str = strlen(&message->message[0]);
+    for(size_t i = 0; i < 448; ++i)
+    {
+        if(i < str)
+            buffer[offset++] = message->message[i];
+        else
+            buffer[offset++] = 0;
+    }
 }
 
 /* Deserialize the data in the given buffe, returning how many messages were

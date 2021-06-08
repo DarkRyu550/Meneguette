@@ -72,8 +72,7 @@ int handle(void *_bundle)
             while(message_board_poll(board, &message_cursor, &msg)) {
                 char write_buffer[512];
 
-                if(message_serialize(msg, write_buffer, 512) != 512)
-                    panic("This could not have failed");
+                message_serialize(&msg, write_buffer);
 
 
                 ssize_t written;
