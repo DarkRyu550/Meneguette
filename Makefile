@@ -1,5 +1,6 @@
 
-CXX=g++
+CC=cc
+CXX=c++
 CXXFLAGS=-Wall -Wextra -Werror -pedantic -fmodules-ts -std=c++20 -g
 
 PROJECTS=Socket

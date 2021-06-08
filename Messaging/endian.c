@@ -48,7 +48,7 @@ void SetEndiannessFromNative(void *buffer, size_t len, int endianness)
 	size_t alignment = _Alignof(uint8_t);
 	size_t buf_addrs = (size_t) buffer;
 	if(buf_addrs % alignment != 0)
-		panic("Buffer 0x%x is not correctly aligned to byte alignment %zu",
+		panic("Buffer 0x%zx is not correctly aligned to byte alignment %zu",
 			buf_addrs,
 			alignment);
 

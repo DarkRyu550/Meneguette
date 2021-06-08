@@ -104,6 +104,9 @@ int domain;
 	int fd = socket(domain, SOCK_STREAM, IPPROTO_TCP);
 	if(fd < 0)
 		panic("Could not create socket: (%d) %s", errno, strerror(errno));
+	if(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0) {
+		panic("Could not enable SO_REUSEADDR: (%d) %s", errno, strerror(errno));
+	}
 
 	
 	int result;
