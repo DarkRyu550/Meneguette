@@ -85,8 +85,6 @@ int handle(void *_bundle)
                     message_board_release(board_key);
                     goto end;
                 }
-
-                message_cursor++;
             }
             message_board_release(board_key);
         }
