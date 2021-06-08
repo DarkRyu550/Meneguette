@@ -2,9 +2,14 @@
 CXX=g++
 CXXFLAGS=-Wall -Wextra -Werror -pedantic -fmodules-ts -std=c++20 -g
 
-all: Socket
+PROJECTS=Socket
+all: $(PROJECTS)
 
 Socket: Socket/Makefile
 	make -C Socket/ CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" all
 
-.PHONY: Socket
+clean:
+	rm -rf gcm.cache
+	for i in $(PROJECTS); do make -C $$i clean; done
+
+.PHONY: $(PROJECTS) all clean

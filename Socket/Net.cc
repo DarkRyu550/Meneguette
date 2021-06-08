@@ -139,7 +139,8 @@ export namespace Net
 		}
 		~TcpStream() 
 		{
-			close(fd);
+			if(fd >= 0)
+				close(fd);
 		}
 
 		/** Write to this TCP socket. */
@@ -152,6 +153,15 @@ export namespace Net
 		size_t read(uint8_t *data, size_t length)
 		{
 			return recv(fd, data, length, 0);
+		}
+
+		/* C++ Sucks. */
+		TcpStream move()
+		{
+			int transfer_fd = this->fd;
+			this->fd = -1;
+
+			return TcpStream(transfer_fd);
 		}
 	};
 

@@ -1,8 +1,15 @@
 #include <iostream>
 #include <cstddef>
 #include <memory>
+#include <thread>
+#include <atomic>
 
 import Net;
+
+void HandleClient(Net::TcpStream stream)
+{
+	stream.write((uint8_t*) "Never Gonna Give You Up", 24);
+}
 
 int main(void)
 {
@@ -12,7 +19,12 @@ int main(void)
 	while(true)
 	{
 		Net::TcpStream stream = listener.accept();
-		stream.write((uint8_t*) "Never Gonna Give You Up", 24);
+		std::thread thread([&stream]()
+		{
+			HandleClient(stream.move());
+		});
+		thread.detach();
 	}
+
 	return 0;
 }

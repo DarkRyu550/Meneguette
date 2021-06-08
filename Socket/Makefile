@@ -5,6 +5,11 @@ Client: $(CLIENT_SOURCES)
 
 SERVER_SOURCES=UnixExceptions.cc Endian.cc Net.cc Server.cc
 Server: $(SERVER_SOURCES)
-	$(CXX) $(CXXFLAGS) -o $@ $(SERVER_SOURCES)
+	$(CXX) $(CXXFLAGS) -o $@ $(SERVER_SOURCES) -l pthread
 
 all: Client Server
+
+clean:
+	rm -rf Client Server gcm.cache
+
+.PHONY: all clean
