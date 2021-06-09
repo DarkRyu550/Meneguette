@@ -9,7 +9,22 @@ typedef struct _message_board_key message_board_key;
 /* Represents exclusive access to a message board, can only be obtained after locking */
 typedef struct _message_board message_board;
 
+typedef struct { size_t index; } message_board_cursor;
+
+/**
+ * Allocates a new message board.
+ *
+ * @return A handle to the message board.
+ *
+ * @see message_board_acquire
+ */
 message_board_key* message_board_create();
+
+/**
+ * Deletes a message board, releasing all resources held by it.
+ *
+ * @param key Handle to the message board that should be deleted.
+ */
 void message_board_free(message_board_key* key);
 
 /**
@@ -49,7 +64,7 @@ void message_board_add(message_board* board, const message_t* message);
  *
  * @return whether or not a message was read.
  */
-bool message_board_poll(message_board* board, size_t* cursor, message_t* message);
+bool message_board_poll(message_board* board, message_board_cursor* cursor, message_t* message);
 
 /**
  * Waits until new messages are available on the board. May return spuriously.

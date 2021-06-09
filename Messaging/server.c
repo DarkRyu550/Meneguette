@@ -74,11 +74,14 @@ static int send_to_client(void* _bundle) {
     message_board_key* board_key = ((struct handler_bundle*)_bundle)->board_key;
     free(_bundle);
 
-    size_t message_cursor = 0;
+    message_board_cursor message_cursor = {0};
 
     message_board* board = message_board_acquire(board_key);
     while(1) {
         message_t msg;
+        //while there are still messages not sent, send them to the client.
+        //most of the time, only a single message will be read, after the initial
+        //burst when a client connects (if there were messages sent before that).
         while(message_board_poll(board, &message_cursor, &msg)) {
             char write_buffer[512];
 
@@ -91,13 +94,14 @@ static int send_to_client(void* _bundle) {
                 fprintf(stderr, "Invalid write length of %zd bytes will"
                                 "misalign communications. Terminating connection %zu.\n",
                         written, connection_id);
-                message_board_release(board_key);
                 goto end;
             }
         }
+        //wait for new messages to be added
         message_board_wait(board);
     }
 end:
+    message_board_release(board_key);
     close(socket);
     return 0;
 }

@@ -27,7 +27,7 @@ const char* message_sender(const message_t *message)
 	return &message->sender[0];
 }
 
-/* Acces the data in the payload field. */
+/* Access the data in the payload field. */
 const char* message_payload(const message_t *message)
 {
 	return &message->message[0];
@@ -57,8 +57,8 @@ void message_serialize(const message_t* message, char buffer[512])
     }
 }
 
-/* Deserialize the data in the given buffe, returning how many messages were
- * successfuly deserialized. */
+/* Deserialize the data in the given buffer, returning how many messages were
+ * successfully deserialized. */
 size_t message_deserialize(
 	const char* buffer, 
 	size_t len,

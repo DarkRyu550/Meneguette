@@ -8,7 +8,7 @@ struct _message_board {
     message_t *messages;
     size_t message_count;
     size_t message_capacity;
-    message_board_key* key;
+    message_board_key* key; /* should not be freed, this is just an up-reference to the owner struct */
 };
 
 struct _message_board_key {
@@ -74,18 +74,28 @@ void message_board_add(message_board* board, const message_t* message) {
             panic("Failed to resize messages array");
         }
     }
+    //write data to buffer
     memcpy(&board->messages[board->message_count], message, sizeof(message_t));
     board->message_count++;
+
+    //notify any waiting listeners
     cnd_broadcast(&board->key->new_messages);
 }
 
-bool message_board_poll(message_board* board, size_t* cursor, message_t* message) {
-    if(*cursor > board->message_count) {
-        panic("Cursor ahead of message count (%zu / %zu)", *cursor, board->message_count);
+bool message_board_poll(message_board* board, message_board_cursor* cursor, message_t* message) {
+    size_t idx = cursor->index;
+    if(idx > board->message_count) {
+        panic("Cursor ahead of message count (%zu / %zu)", idx, board->message_count);
     }
-    if(*cursor == board->message_count) return false;
-    memcpy(message, &board->messages[*cursor], sizeof(message_t));
-    (*cursor)++;
+    //already up to date
+    if(idx == board->message_count) {
+        return false;
+    }
+
+    memcpy(message, &board->messages[idx], sizeof(message_t));
+
+    //advance cursor
+    cursor->index = idx + 1;
     return true;
 }
 
