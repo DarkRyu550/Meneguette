@@ -4,14 +4,14 @@
 #include "message_board.h"
 #include "panic.h"
 
-struct _message_board {
+struct message_board_internal {
     message_t *messages;
     size_t message_count;
     size_t message_capacity;
     message_board_key* key; /* should not be freed, this is just an up-reference to the owner struct */
 };
 
-struct _message_board_key {
+struct message_board_key_internal {
     mtx_t lock;
     cnd_t new_messages;
     message_board board;
@@ -101,6 +101,6 @@ bool message_board_poll(message_board* board, message_board_cursor* cursor, mess
 
 void message_board_wait(message_board* board) {
     while(cnd_wait(&board->key->new_messages, &board->key->lock) != thrd_success) {
-        ; //do nothing
+        //do nothing
     }
 }

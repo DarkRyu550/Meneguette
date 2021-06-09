@@ -1,5 +1,4 @@
 #include "address.h"
-#include "endian.h"
 #include "panic.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -50,29 +49,20 @@ int socket_connect_tcp(socket_address_t address)
 	int result;
 	if(address.type == ADDRESS_TYPE_IPV4)
 	{
-		struct sockaddr_in in;
+		struct sockaddr_in in = {0};
 		in.sin_family = AF_INET;
-		in.sin_zero[0] = 0;
-		in.sin_zero[1] = 0;
-		in.sin_zero[2] = 0;
-		in.sin_zero[3] = 0;
-		in.sin_zero[4] = 0;
-		in.sin_zero[5] = 0;
-		in.sin_zero[6] = 0;
-		in.sin_zero[7] = 0;
-		in.sin_port = address.ipv4.port;
+		in.sin_port = htons(address.ipv4.port);
 
 		uint32_t addr = 0;
-		addr  |= address.ipv4.nibbles[0]; 
+		addr  |= address.ipv4.nibbles[0];
 		addr <<= 8;
-		addr  |= address.ipv4.nibbles[1]; 
+		addr  |= address.ipv4.nibbles[1];
 		addr <<= 8;
-		addr  |= address.ipv4.nibbles[2]; 
+		addr  |= address.ipv4.nibbles[2];
 		addr <<= 8;
 		addr  |= address.ipv4.nibbles[3];
-		SetEndiannessFromNative(&addr, sizeof(uint32_t), ENDIANNESS_BIG);
 
-		in.sin_addr.s_addr = addr;
+		in.sin_addr.s_addr = htonl(addr);
 
 		result = connect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
 	}
@@ -112,17 +102,9 @@ int domain;
 	int result;
 	if(address.type == ADDRESS_TYPE_IPV4)
 	{
-		struct sockaddr_in in;
+		struct sockaddr_in in = {0};
 		in.sin_family = AF_INET;
-		in.sin_zero[0] = 0;
-		in.sin_zero[1] = 0;
-		in.sin_zero[2] = 0;
-		in.sin_zero[3] = 0;
-		in.sin_zero[4] = 0;
-		in.sin_zero[5] = 0;
-		in.sin_zero[6] = 0;
-		in.sin_zero[7] = 0;
-		in.sin_port = address.ipv4.port;
+		in.sin_port = htons(address.ipv4.port);
 
 		uint32_t addr = 0;
 		addr  |= address.ipv4.nibbles[0]; 
@@ -132,9 +114,8 @@ int domain;
 		addr  |= address.ipv4.nibbles[2]; 
 		addr <<= 8;
 		addr  |= address.ipv4.nibbles[3];
-		SetEndiannessFromNative(&addr, sizeof(uint32_t), ENDIANNESS_BIG);
 
-		in.sin_addr.s_addr = addr;
+		in.sin_addr.s_addr = htonl(addr);
 
 		result = bind(fd, (struct sockaddr *) &in, sizeof(struct sockaddr_in));
 	}

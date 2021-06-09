@@ -11,18 +11,12 @@ typedef struct
 /* Create a new message structure from the given parameters. */
 message_t message_create(const char *sender, const char *message);
 
-/* Access the data in the sender field. */
-const char* message_sender(const message_t *message);
-
-/* Acces the data in the payload field. */
-const char* message_payload(const message_t *message);
-
 /* Serialize the data of a message into a byte buffer, returning how many 
  * bytes of valid data were written. */
 void message_serialize(const message_t* message, char buffer[512]);
 
-/* Deserialize the data in the given buffe, returning how many messages were
- * successfuly deserialized. */
+/* Deserialize the data in the given buffer, returning how many messages were
+ * successfully deserialized. */
 size_t message_deserialize(
 	const char* buffer, 
 	size_t len,

@@ -4,10 +4,10 @@
 #include "message.h"
 
 /* Identifies a message board, such that it can be shared between threads */
-typedef struct _message_board_key message_board_key;
+typedef struct message_board_key_internal message_board_key;
 
 /* Represents exclusive access to a message board, can only be obtained after locking */
-typedef struct _message_board message_board;
+typedef struct message_board_internal message_board;
 
 typedef struct { size_t index; } message_board_cursor;
 

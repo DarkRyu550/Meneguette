@@ -21,18 +21,6 @@ message_t message_create(const char *sender, const char *message)
 	return target;
 }
 
-/* Access the data in the sender field. */
-const char* message_sender(const message_t *message)
-{
-	return &message->sender[0];
-}
-
-/* Access the data in the payload field. */
-const char* message_payload(const message_t *message)
-{
-	return &message->message[0];
-}
-
 /* Serialize the data of a message into a byte buffer, returning how many 
  * bytes of valid data were written. */
 void message_serialize(const message_t* message, char buffer[512])
