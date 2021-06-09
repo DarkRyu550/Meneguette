@@ -118,7 +118,7 @@ static void spawn_thread(int socket, size_t connection_id, message_board_key* bo
 
 int main(void)
 {
-	socket_address_t address = socket_address_ipv4(127, 0, 0, 1, 24069);
+	socket_address_t address = socket_address_ipv4(0, 0, 0, 0, 3621);
 	int socket = socket_bind_tcp(address);
 
 	if(listen(socket, 1024) != 0)

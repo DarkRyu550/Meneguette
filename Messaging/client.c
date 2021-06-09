@@ -10,7 +10,7 @@
 
 int main(int argc, char **argv)
 {
-	socket_address_t address = socket_address_ipv4(127, 0, 0, 1, 24069);
+	socket_address_t address = socket_address_ipv4(127, 0, 0, 1, 3621);
 	int socket = socket_connect_tcp(address);
 
 	/* We'll need the standard input and the server socket in nonblocking mode 
