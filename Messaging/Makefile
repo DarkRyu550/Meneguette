@@ -1,7 +1,7 @@
 
 CC=clang
 CFLAGS=-Wall -Wextra -Werror -pedantic -std=c17 -O2 -g -fsanitize=address,undefined
-LFLAGS=-g -fsanitize=address,undefined
+LFLAGS=-g -fsanitize=address,undefined -lpthread
 
 OBJS=panic.o endian.o address.o message.o
 CLIENT=client.o
