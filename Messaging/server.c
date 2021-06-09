@@ -48,6 +48,8 @@ static int receive_from_client(void *_bundle)
 		}
 		bytes += count_read;
 
+		//messages are exactly 512 bytes (padded to length as needed), so until an entire message has been read
+		//there's nothing to do.
 		if(bytes == 512)
 		{
 		    message_t msg;
@@ -107,6 +109,10 @@ end:
 }
 
 static void spawn_thread(int socket, size_t connection_id, message_board_key* board_key, thrd_start_t handler) {
+    //a new bundle is allocated for each thread, even though both have the same data,
+    //because this greatly simplifies freeing them, as each thread can just free() as soon
+    //as it's done copying the values, without needing to synchronize with other threads
+    //for cleanup.
     struct handler_bundle *bundle = malloc(sizeof(*bundle));
     if(bundle == NULL)
         panic("Could not allocate memory for thread initialization bundle");
