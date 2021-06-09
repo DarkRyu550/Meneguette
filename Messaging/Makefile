@@ -1,5 +1,3 @@
-
-CC=clang
 CFLAGS=-Wall -Wextra -Werror -pedantic -std=c17 -O2 -g -fsanitize=address,undefined
 LFLAGS=-g -fsanitize=address,undefined -lpthread
 
