@@ -23,6 +23,9 @@ message_board_key* message_board_create();
 /**
  * Deletes a message board, releasing all resources held by it.
  *
+ * This function should not be called while some thread has access to the message
+ * board (is in the middle of an acquire/release pair).
+ *
  * @param key Handle to the message board that should be deleted.
  */
 void message_board_free(message_board_key* key);
@@ -30,6 +33,8 @@ void message_board_free(message_board_key* key);
 /**
  * Acquires exclusive access to a board. The returned pointer is guaranteed to not be used
  * by other threads until the matching `message_board_release` call.
+ *
+ * acquire/release pairs may be nested, and will release once the outermost release gets called.
  *
  * Using the pointer after the matching release call is *undefined behavior*.
  *
@@ -49,6 +54,8 @@ void message_board_release(message_board_key* key);
 /**
  * Adds a message to the board. The message is *copied*, so the given pointer is
  * safe to free after this function returns.
+ *
+ * This function should not be called after calling `message_board_release`.
  */
 void message_board_add(message_board* board, const message_t* message);
 
@@ -57,6 +64,8 @@ void message_board_add(message_board* board, const message_t* message);
  *
  * `cursor` should be initialized to 0 before the first call, then reused for the same
  * client.
+ *
+ * This function should not be called after calling `message_board_release`.
  *
  * @param board   board to read messages from.
  * @param cursor  current message cursor, updated on reads.
@@ -70,6 +79,8 @@ bool message_board_poll(message_board* board, message_board_cursor* cursor, mess
  * Waits until new messages are available on the board. May return spuriously.
  *
  * Releases ownership of the board while waiting.
+ *
+ * This function should not be called after calling `message_board_release`.
  *
  * @param board board to wait for.
  */
