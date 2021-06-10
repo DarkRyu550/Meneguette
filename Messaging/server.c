@@ -1,6 +1,7 @@
 #include "message_board.h"
 #include "panic.h"
 #include "address.h"
+#include "socket.h"
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <threads.h>
@@ -11,14 +12,14 @@
 
 struct handler_bundle
 {
-	int socket;
+	socket_t* socket;
 	size_t connection_id;
 	message_board_key* board_key;
 };
 
 static int receive_from_client(void *_bundle)
 {
-	int socket = ((struct handler_bundle*)_bundle)->socket;
+    socket_t* socket = ((struct handler_bundle*)_bundle)->socket;
 	size_t connection_id = ((struct handler_bundle*)_bundle)->connection_id;
 	message_board_key* board_key = ((struct handler_bundle*)_bundle)->board_key;
 	free(_bundle);
@@ -30,8 +31,14 @@ static int receive_from_client(void *_bundle)
 
 	while(1)
 	{
-		ssize_t count_read = read(socket, &buffer[bytes], 512 - bytes);
-		if(count_read < 0) 
+		ssize_t count_read = socket_read(socket, &buffer[bytes], 512 - bytes);
+		if(socket_is_unneeded(socket)) {
+            fprintf(stderr, "Dropped connection %zu: Socket closed by writer thread (%zu in "
+                            "buffer).\n",
+                    connection_id, bytes);
+            break;
+		}
+		if(count_read < 0)
 		{
 			fprintf(stderr, "Dropped connection %zu: (%d) %s\n",
 				connection_id,
@@ -66,12 +73,13 @@ static int receive_from_client(void *_bundle)
 			bytes = 0;
 		}
 	}
-	close(socket);
+    socket_mark_unneeded(socket);
+    socket_release(socket);
 	return 0;
 }
 
 static int send_to_client(void* _bundle) {
-    int socket = ((struct handler_bundle*)_bundle)->socket;
+    socket_t* socket = ((struct handler_bundle*)_bundle)->socket;
     size_t connection_id = ((struct handler_bundle*)_bundle)->connection_id;
     message_board_key* board_key = ((struct handler_bundle*)_bundle)->board_key;
     free(_bundle);
@@ -91,11 +99,15 @@ static int send_to_client(void* _bundle) {
 
 
             ssize_t written;
-            if((written = write(socket, write_buffer, 512)) != 512)
+            if((written = socket_write(socket, write_buffer, 512)) != 512)
             {
-                fprintf(stderr, "Invalid write length of %zd bytes will "
-                                "misalign communications. Terminating connection %zu.\n",
-                        written, connection_id);
+                //don't print anything if socket_is_unneeded is true, because it'll only return
+                //that if the reader thread sets it, in which case it already printed the socket close.
+                if(!socket_is_unneeded(socket)) {
+                    fprintf(stderr, "Invalid write length of %zd bytes will "
+                                    "misalign communications. Terminating connection %zu.\n",
+                            written, connection_id);
+                }
                 goto end;
             }
         }
@@ -104,11 +116,12 @@ static int send_to_client(void* _bundle) {
     }
 end:
     message_board_release(board_key);
-    close(socket);
+    socket_mark_unneeded(socket);
+    socket_release(socket);
     return 0;
 }
 
-static void spawn_thread(int socket, size_t connection_id, message_board_key* board_key, thrd_start_t handler) {
+static void spawn_thread(socket_t* socket, size_t connection_id, message_board_key* board_key, thrd_start_t handler) {
     //a new bundle is allocated for each thread, even though both have the same data,
     //because this greatly simplifies freeing them, as each thread can just free() as soon
     //as it's done copying the values, without needing to synchronize with other threads
@@ -116,6 +129,9 @@ static void spawn_thread(int socket, size_t connection_id, message_board_key* bo
     struct handler_bundle *bundle = malloc(sizeof(*bundle));
     if(bundle == NULL)
         panic("Could not allocate memory for thread initialization bundle");
+
+    //increase reference count for the new thread
+    socket_retain(socket);
 
     bundle->socket = socket;
     bundle->connection_id = connection_id;
@@ -134,7 +150,7 @@ int main(void)
 	if(listen(socket, 1024) != 0)
 		panic("Could not listen on bound socket: (%d) %s", errno, strerror(errno));
 
-	int accepted = 0;
+	int accepted;
 	int faults = 0;
 	size_t connection = 0;
 
@@ -155,8 +171,11 @@ int main(void)
 			continue;
 		}
 
-        spawn_thread(accepted, connection, board_key, receive_from_client);
-        spawn_thread(accepted, connection, board_key, send_to_client);
+		socket_t* s = socket_create(accepted);
+        spawn_thread(s, connection, board_key, receive_from_client);
+        spawn_thread(s, connection, board_key, send_to_client);
+        socket_release(s);
+
         connection++;
 	}
 

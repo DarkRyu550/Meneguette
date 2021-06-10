@@ -3,7 +3,7 @@ LFLAGS=-g -fsanitize=address,undefined -lpthread
 
 OBJS=panic.o address.o message.o
 CLIENT=client.o
-SERVER=server.o message_board.o
+SERVER=server.o message_board.o socket.o
 
 all: client server
 
