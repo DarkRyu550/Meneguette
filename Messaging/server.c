@@ -182,8 +182,8 @@ int main(void)
 		}
 
 		socket_t* s = socket_create(accepted);
-        spawn_thread(s, connection, board_key, receive_from_client);
-        spawn_thread(s, connection, board_key, send_to_client);
+        spawn_worker_thread(s, connection, board_key, receive_from_client);
+        spawn_worker_thread(s, connection, board_key, send_to_client);
         socket_release(s);
 
         connection++;
