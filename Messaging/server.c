@@ -93,7 +93,7 @@ static int send_to_client(void* _bundle) {
             ssize_t written;
             if((written = write(socket, write_buffer, 512)) != 512)
             {
-                fprintf(stderr, "Invalid write length of %zd bytes will"
+                fprintf(stderr, "Invalid write length of %zd bytes will "
                                 "misalign communications. Terminating connection %zu.\n",
                         written, connection_id);
                 goto end;

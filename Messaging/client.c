@@ -53,6 +53,8 @@ int main(int argc, char **argv)
 			if(errno != EAGAIN)
 				/* Die on error. */
 				break;
+			if(r == 0)
+				break;
 		}
 		else recv_bytes += r;
 		
@@ -94,6 +96,8 @@ int main(int argc, char **argv)
 				close(socket);
 				return 1;
 			}
+
+			msg_bytes = 0;
 		} 
 	}
 end:
