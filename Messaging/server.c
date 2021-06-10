@@ -73,6 +73,7 @@ static int receive_from_client(void *_bundle)
 			bytes = 0;
 		}
 	}
+    message_board_ref_release(board_key);
     socket_mark_unneeded(socket);
     socket_release(socket);
 	return 0;
@@ -88,6 +89,11 @@ static int send_to_client(void* _bundle) {
 
     message_board* board = message_board_acquire(board_key);
     while(1) {
+        //if socket marked unneeded by reader, bail out
+        if(socket_is_unneeded(socket)) {
+            break;
+        }
+
         message_t msg;
         //while there are still messages not sent, send them to the client.
         //most of the time, only a single message will be read, after the initial
@@ -116,12 +122,14 @@ static int send_to_client(void* _bundle) {
     }
 end:
     message_board_release(board_key);
+    message_board_ref_release(board_key);
+
     socket_mark_unneeded(socket);
     socket_release(socket);
     return 0;
 }
 
-static void spawn_thread(socket_t* socket, size_t connection_id, message_board_key* board_key, thrd_start_t handler) {
+static void spawn_worker_thread(socket_t* socket, size_t connection_id, message_board_key* board_key, thrd_start_t handler) {
     //a new bundle is allocated for each thread, even though both have the same data,
     //because this greatly simplifies freeing them, as each thread can just free() as soon
     //as it's done copying the values, without needing to synchronize with other threads
@@ -130,16 +138,18 @@ static void spawn_thread(socket_t* socket, size_t connection_id, message_board_k
     if(bundle == NULL)
         panic("Could not allocate memory for thread initialization bundle");
 
-    //increase reference count for the new thread
+    //increase reference counts for the new thread
     socket_retain(socket);
+    message_board_ref_retain(board_key);
 
     bundle->socket = socket;
     bundle->connection_id = connection_id;
     bundle->board_key = board_key;
 
     thrd_t thread;
-    thrd_create(&thread, handler, bundle);
-    thrd_detach(thread);
+    if(thrd_create(&thread, handler, bundle) != thrd_success) {
+        panic("Failed to create thread");
+    }
 }
 
 int main(void)
@@ -180,5 +190,6 @@ int main(void)
 	}
 
 	close(socket);
+    message_board_ref_release(board_key);
 	return 0;
 }

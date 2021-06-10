@@ -1,3 +1,4 @@
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 #include <threads.h>
@@ -14,6 +15,7 @@ struct message_board_internal {
 struct message_board_key_internal {
     mtx_t lock;
     cnd_t new_messages;
+    atomic_size_t reference_count;
     message_board board;
 };
 
@@ -28,6 +30,7 @@ message_board_key* message_board_create() {
     if(cnd_init(&k->new_messages) != thrd_success) {
         panic("Message board condition variable initialization failed");
     }
+    k->reference_count = 1;
     k->board.messages = NULL;
     k->board.message_count = 0;
     k->board.message_capacity = 0;
@@ -35,20 +38,18 @@ message_board_key* message_board_create() {
     return k;
 }
 
-void message_board_free(message_board_key* key) {
-    int res;
-    //5 tries to avoid spurious failures
-    for(int i = 0; i < 5; i++) {
-        if((res = mtx_trylock(&key->lock)) == thrd_busy) continue;
-        break;
+void message_board_ref_retain(message_board_key* key) {
+    atomic_fetch_add(&key->reference_count, 1);
+}
+
+void message_board_ref_release(message_board_key* key) {
+    cnd_broadcast(&key->new_messages);
+    if(atomic_fetch_sub(&key->reference_count, 1) == 1) {
+        mtx_destroy(&key->lock);
+        cnd_destroy(&key->new_messages);
+        free(key->board.messages);
+        free(key);
     }
-    if(res != thrd_success) {
-        panic("Failed to acquire mutex for freeing message board (free-while-used?), result=%s", res == thrd_busy ? "busy" : "error");
-    }
-    mtx_destroy(&key->lock);
-    cnd_destroy(&key->new_messages);
-    free(key->board.messages);
-    free(key);
 }
 
 message_board* message_board_acquire(message_board_key* key) {

@@ -21,14 +21,19 @@ typedef struct { size_t index; } message_board_cursor;
 message_board_key* message_board_create();
 
 /**
- * Deletes a message board, releasing all resources held by it.
+ * Increases the reference count of a message board.
  *
- * This function should not be called while some thread has access to the message
- * board (is in the middle of an acquire/release pair).
- *
- * @param key Handle to the message board that should be deleted.
+ * @param key Board to retain.
  */
-void message_board_free(message_board_key* key);
+void message_board_ref_retain(message_board_key* key);
+
+/**
+ * Decreases the reference count of a message board, releasing it's resources if
+ * it reaches 0.
+ *
+ * @param key Board to release.
+ */
+void message_board_ref_release(message_board_key* key);
 
 /**
  * Acquires exclusive access to a board. The returned pointer is guaranteed to not be used
