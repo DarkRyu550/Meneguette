@@ -2,6 +2,7 @@
 #include "panic.h"
 #include "address.h"
 #include "socket.h"
+#include "join_list.h"
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <threads.h>
@@ -15,6 +16,7 @@ struct handler_bundle
 	socket_t* socket;
 	size_t connection_id;
 	message_board_key* board_key;
+	join_list* join_list;
 };
 
 static int receive_from_client(void *_bundle)
@@ -22,6 +24,7 @@ static int receive_from_client(void *_bundle)
     socket_t* socket = ((struct handler_bundle*)_bundle)->socket;
 	size_t connection_id = ((struct handler_bundle*)_bundle)->connection_id;
 	message_board_key* board_key = ((struct handler_bundle*)_bundle)->board_key;
+	join_list* joins = ((struct handler_bundle*)_bundle)->join_list;
 	free(_bundle);
 
 	/* Current message buffer. */
@@ -76,6 +79,8 @@ static int receive_from_client(void *_bundle)
     message_board_ref_release(board_key);
     socket_mark_unneeded(socket);
     socket_release(socket);
+
+    join_list_notify_exit(joins, thrd_current());
 	return 0;
 }
 
@@ -83,6 +88,7 @@ static int send_to_client(void* _bundle) {
     socket_t* socket = ((struct handler_bundle*)_bundle)->socket;
     size_t connection_id = ((struct handler_bundle*)_bundle)->connection_id;
     message_board_key* board_key = ((struct handler_bundle*)_bundle)->board_key;
+    join_list* joins = ((struct handler_bundle*)_bundle)->join_list;
     free(_bundle);
 
     message_board_cursor message_cursor = {0};
@@ -126,10 +132,12 @@ end:
 
     socket_mark_unneeded(socket);
     socket_release(socket);
+
+    join_list_notify_exit(joins, thrd_current());
     return 0;
 }
 
-static void spawn_worker_thread(socket_t* socket, size_t connection_id, message_board_key* board_key, thrd_start_t handler) {
+static void spawn_worker_thread(socket_t* socket, size_t connection_id, message_board_key* board_key, join_list* joins, thrd_start_t handler) {
     //a new bundle is allocated for each thread, even though both have the same data,
     //because this greatly simplifies freeing them, as each thread can just free() as soon
     //as it's done copying the values, without needing to synchronize with other threads
@@ -142,14 +150,26 @@ static void spawn_worker_thread(socket_t* socket, size_t connection_id, message_
     socket_retain(socket);
     message_board_ref_retain(board_key);
 
+    join_list_notify_creation(joins);
+
     bundle->socket = socket;
     bundle->connection_id = connection_id;
     bundle->board_key = board_key;
+    bundle->join_list = joins;
 
     thrd_t thread;
     if(thrd_create(&thread, handler, bundle) != thrd_success) {
         panic("Failed to create thread");
     }
+}
+
+static int joiner(void* bundle) {
+    join_list* list = bundle;
+    thrd_t thread;
+    while(join_list_next(list, &thread)) {
+        thrd_join(thread, NULL);
+    }
+    return 0;
 }
 
 int main(void)
@@ -169,6 +189,12 @@ int main(void)
 	//threads exit)
 	message_board_key* board_key = message_board_create();
 
+	join_list* joins = join_list_new();
+	thrd_t joiner_handle;
+	if(thrd_create(&joiner_handle, joiner, (void*)joins) != thrd_success) {
+	    panic("Failed to start joiner");
+	}
+
 	while(faults < 4)
 	{
 		accepted = accept(socket, NULL, NULL);
@@ -182,12 +208,17 @@ int main(void)
 		}
 
 		socket_t* s = socket_create(accepted);
-        spawn_worker_thread(s, connection, board_key, receive_from_client);
-        spawn_worker_thread(s, connection, board_key, send_to_client);
+        spawn_worker_thread(s, connection, board_key, joins, receive_from_client);
+        spawn_worker_thread(s, connection, board_key, joins, send_to_client);
         socket_release(s);
 
         connection++;
 	}
+
+    fprintf(stderr, "Starting termination\n");
+    join_list_start_termination(joins);
+    thrd_join(joiner_handle, NULL);
+    join_list_free(joins);
 
 	close(socket);
     message_board_ref_release(board_key);
