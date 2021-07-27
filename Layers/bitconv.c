@@ -57,7 +57,7 @@ char* bitconv_read_string(const bit_vector* vec, size_t bit_pos) {
             capacity = new_cap;
         }
         uint8_t ch;
-        if(bit_pos + 8 >= bit_vector_size(vec)) {
+        if(bit_pos + 8 > bit_vector_size(vec)) {
             ch = 0;
         } else {
             ch = bitconv_read_u8(vec, bit_pos);

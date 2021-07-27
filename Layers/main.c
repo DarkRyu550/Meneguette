@@ -6,6 +6,7 @@
 #include <time.h>
 #include <ctype.h>
 
+static int errorRate = 2;
 static bool colorNonPrintable;
 static const error_check_mode* errorCheck;
 
@@ -45,7 +46,19 @@ static void print_bits(const bit_vector* vec) {
 }
 
 int main(void) {
-    colorNonPrintable = getenv("NO_COLOR") == NULL;
+    char* error = getenv("ERROR_RATE");
+    if(error) {
+        char* end;
+        long parsed = strtol(error, &end, 10);
+        if(*end != '\0' || (parsed < 0 || parsed > 100)) {
+            fprintf(stderr, "Invalid error rate '%s', must be a valid base10 integer between 0 and 100 (inclusive)", error);
+            fflush(stderr);
+            exit(1);
+        }
+        errorRate = (int)parsed;
+    }
+    printf("Flipping \x1b[31m%d%%\x1b[0m of bits\n", errorRate);
+
     char* mode = getenv("ERROR_CHECK_MODE");
     if(mode) {
         if(!strcmp(mode, "crc32")) {
@@ -63,10 +76,13 @@ int main(void) {
         errorCheck = ERROR_CHECK_CRC32;
     }
     printf("Using error check mode \x1b[31m%s\x1b[0m\n", error_check_name(errorCheck));
+
+    colorNonPrintable = getenv("NO_COLOR") == NULL;
     if(colorNonPrintable) {
         printf("Non printable characters on the receiving application will\n");
         printf("be printed in hexadecimal and \x1b[31mred\x1b[0m\n");
     }
+
     sender_application();
 }
 
@@ -99,11 +115,9 @@ static void sender_link_layer(bit_vector* vec) {
 }
 
 static void comm_layer(bit_vector* vec) {
-    const int error_rate = 2;
-
     srand(time(NULL)); // NOLINT(cert-msc51-cpp)
     for(size_t i = 0; i < bit_vector_size(vec); i++) {
-        if(rand() % 100 < error_rate) {  // NOLINT(cert-msc50-cpp)
+        if(rand() % 100 < errorRate) {  // NOLINT(cert-msc50-cpp)
             //bit flip
             bit_vector_set(vec, i, !bit_vector_get(vec, i));
         }
