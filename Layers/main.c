@@ -22,7 +22,10 @@ static void print_bits(const bit_vector* vec) {
     size_t remaining_bits = bit_vector_size(vec);
     size_t pos = 0;
     size_t bytes_written = 0;
+    //while there's at least one remaining entire byte to write
     while(remaining_bits >= 8) {
+        //if a multiple of 8 has been printed so far we're on a new line
+        //so indent the bits
         if(bytes_written % 8 == 0) {
             printf("  ");
         }
@@ -32,11 +35,15 @@ static void print_bits(const bit_vector* vec) {
         printf(" ");
         remaining_bits -= 8;
         bytes_written++;
+        //if the current line has 8 bytes, go to the next
         if(bytes_written % 8 == 0) {
             printf("\n");
         }
     }
+    //handle trailing bits
     if(remaining_bits > 0) {
+        //if a multiple of 8 bytes has been printed so far we're on a new line
+        //so indent the bits
         if(bytes_written % 8 == 0) {
             printf("  ");
         }
@@ -46,6 +53,7 @@ static void print_bits(const bit_vector* vec) {
         }
         printf("\n");
     } else if(bytes_written % 8 != 0) {
+        //if the current line has data written to it, go to the next
         printf("\n");
     }
 }
