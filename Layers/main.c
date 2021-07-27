@@ -22,8 +22,8 @@ static void print_bits(const bit_vector* vec) {
     size_t pos = 0;
     size_t bytes_line = 0;
     while(remaining_bits >= 8) {
-        if(++bytes_line == 8) {
-            bytes_line = 0;
+        if(bytes_line++ == 8) {
+            bytes_line = 1;
             printf("\n");
         }
         for(size_t i = 0; i < 8; i++) {
@@ -32,7 +32,7 @@ static void print_bits(const bit_vector* vec) {
         printf(" ");
         remaining_bits -= 8;
     }
-    if(++bytes_line == 8) {
+    if(bytes_line == 8) {
         printf("\n");
     }
     if(remaining_bits > 0) {
