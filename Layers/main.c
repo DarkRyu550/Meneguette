@@ -21,26 +21,31 @@ static void receiver_application(char* message);
 static void print_bits(const bit_vector* vec) {
     size_t remaining_bits = bit_vector_size(vec);
     size_t pos = 0;
-    size_t bytes_line = 0;
+    size_t bytes_written = 0;
     while(remaining_bits >= 8) {
-        if(bytes_line++ == 8) {
-            bytes_line = 1;
-            printf("\n");
+        if(bytes_written % 8 == 0) {
+            printf("  ");
         }
         for(size_t i = 0; i < 8; i++) {
             printf("%s", bit_vector_get(vec, pos++) ? "1" : "0");
         }
         printf(" ");
         remaining_bits -= 8;
-    }
-    if(bytes_line == 8) {
-        printf("\n");
+        bytes_written++;
+        if(bytes_written % 8 == 0) {
+            printf("\n");
+        }
     }
     if(remaining_bits > 0) {
+        if(bytes_written % 8 == 0) {
+            printf("  ");
+        }
         while(remaining_bits > 0) {
             printf("%s", bit_vector_get(vec, pos++) ? "1" : "0");
             remaining_bits--;
         }
+        printf("\n");
+    } else if(bytes_written % 8 != 0) {
         printf("\n");
     }
 }
