@@ -74,3 +74,10 @@ void bit_vector_set(bit_vector* vec, size_t pos, bool value);
  * @param amount How many bits to remove.
  */
 void bit_vector_remove_range(bit_vector* vec, size_t start, size_t amount);
+
+/**
+ * Clears the vector, removing all bits from it.
+ *
+ * @param vec Vector to clear.
+ */
+void bit_vector_clear(bit_vector* vec);

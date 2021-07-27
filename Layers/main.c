@@ -7,8 +7,8 @@
 #include <ctype.h>
 
 static int errorRate = 2;
-static bool colorNonPrintable;
 static const error_check_mode* errorCheck;
+static bit_vector* flippedBits;
 
 static void sender_application();
 static void sender_application_layer(char* message);
@@ -17,6 +17,17 @@ static void comm_layer(bit_vector* vec);
 static void receiver_link_layer(bit_vector* vec);
 static void receiver_application_layer(bit_vector* vec);
 static void receiver_application(char* message);
+
+static void print_bit(const bit_vector* vec, size_t pos) {
+    const char* val = bit_vector_get(vec, pos) ? "1" : "0";
+    //position check needed for sender_link_layer, which will print the bits
+    //while flippedBits has a size of 0
+    if(pos < bit_vector_size(flippedBits) && bit_vector_get(flippedBits, pos)) {
+        printf("\x1b[31m%s\x1b[0m", val);
+    } else {
+        printf("%s", val);
+    }
+}
 
 static void print_bits(const bit_vector* vec) {
     size_t remaining_bits = bit_vector_size(vec);
@@ -30,7 +41,7 @@ static void print_bits(const bit_vector* vec) {
             printf("  ");
         }
         for(size_t i = 0; i < 8; i++) {
-            printf("%s", bit_vector_get(vec, pos++) ? "1" : "0");
+            print_bit(vec, pos++);
         }
         printf(" ");
         remaining_bits -= 8;
@@ -48,7 +59,7 @@ static void print_bits(const bit_vector* vec) {
             printf("  ");
         }
         while(remaining_bits > 0) {
-            printf("%s", bit_vector_get(vec, pos++) ? "1" : "0");
+            print_bit(vec, pos++);
             remaining_bits--;
         }
         printf("\n");
@@ -90,13 +101,15 @@ int main(void) {
     }
     printf("Using error check mode \x1b[31m%s\x1b[0m\n", error_check_name(errorCheck));
 
-    colorNonPrintable = getenv("NO_COLOR") == NULL;
-    if(colorNonPrintable) {
-        printf("Non printable characters on the receiving application will\n");
-        printf("be printed in hexadecimal and \x1b[31mred\x1b[0m\n");
-    }
+    printf("Non printable characters on the receiving application will\n");
+    printf("be printed in hexadecimal and \x1b[31mred\x1b[0m\n");
 
-    sender_application();
+    flippedBits = bit_vector_new();
+
+    while(!feof(stdin)) {
+        bit_vector_clear(flippedBits);
+        sender_application();
+    }
 }
 
 static void sender_application() {
@@ -133,6 +146,10 @@ static void comm_layer(bit_vector* vec) {
         if(rand() % 100 < errorRate) {  // NOLINT(cert-msc50-cpp)
             //bit flip
             bit_vector_set(vec, i, !bit_vector_get(vec, i));
+            //track flipped bits for highlighting
+            bit_vector_push(flippedBits, true);
+        } else {
+            bit_vector_push(flippedBits, false);
         }
     }
     receiver_link_layer(vec);
@@ -160,18 +177,14 @@ static void receiver_application_layer (bit_vector* vec) {
 
 static void receiver_application(char* message) {
     printf("Received message '");
-    if(colorNonPrintable) {
-        size_t len = strlen(message);
-        for(size_t i = 0; i < len; i++) {
-            char ch = message[i];
-            if(isprint(ch)) {
-                fputc(message[i], stdout);
-            } else {
-                printf("\x1b[31m0x%02X\x1b[0m", (uint8_t)ch);
-            }
+    size_t len = strlen(message);
+    for(size_t i = 0; i < len; i++) {
+        char ch = message[i];
+        if(isprint(ch)) {
+            fputc(message[i], stdout);
+        } else {
+            printf("\x1b[31m0x%02X\x1b[0m", (uint8_t)ch);
         }
-    } else {
-        printf("%s", message);
     }
     printf("'\n");
     free(message);

@@ -55,3 +55,7 @@ void bit_vector_remove_range(bit_vector* vec, size_t start, size_t amount) {
     memmove(&vec->data[start], &vec->data[start + amount], vec->size - start - amount);
     vec->size -= amount;
 }
+
+void bit_vector_clear(bit_vector* vec) {
+    vec->size = 0;
+}
