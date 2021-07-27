@@ -47,6 +47,17 @@ size_t bit_vector_size(const bit_vector* vec);
 bool bit_vector_get(const bit_vector* vec, size_t pos);
 
 /**
+ * Sets the bit at a given position.
+ *
+ * If the position is out of bounds, this function panics.
+ *
+ * @param vec   Vector to write data to.
+ * @param pos   Position of the wanted bit.
+ * @param value Value to write.
+ */
+void bit_vector_set(bit_vector* vec, size_t pos, bool value);
+
+/**
  * Removes a range of bits from the vector, shifting further elements
  * into the position where bits were removed, such as:
  *

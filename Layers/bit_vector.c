@@ -43,6 +43,11 @@ bool bit_vector_get(const bit_vector* vec, size_t pos) {
     return vec->data[pos];
 }
 
+void bit_vector_set(bit_vector* vec, size_t pos, bool value) {
+    if(pos >= vec->size) panic("Out of bounds read: index=%zu, size=%zu", pos, vec->size);
+    vec->data[pos] = value;
+}
+
 void bit_vector_remove_range(bit_vector* vec, size_t start, size_t amount) {
     if(start + amount > vec->size) {
         panic("Out of bounds removal: start=%zu, end=%zu, size=%zu", start, start + amount, vec->size);

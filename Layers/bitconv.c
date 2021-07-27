@@ -56,8 +56,13 @@ char* bitconv_read_string(const bit_vector* vec, size_t bit_pos) {
             if(!buf) panic("Allocation failure");
             capacity = new_cap;
         }
-        uint8_t ch = bitconv_read_u8(vec, bit_pos);
-        bit_pos += 8;
+        uint8_t ch;
+        if(bit_pos + 8 >= bit_vector_size(vec)) {
+            ch = 0;
+        } else {
+            ch = bitconv_read_u8(vec, bit_pos);
+            bit_pos += 8;
+        }
         if(ch == 0) {
             buf[index] = 0;
             break;
