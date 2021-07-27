@@ -101,9 +101,6 @@ int main(void) {
     }
     printf("Using error check mode \x1b[31m%s\x1b[0m\n", error_check_name(errorCheck));
 
-    printf("Non printable characters on the receiving application will\n");
-    printf("be printed in hexadecimal and \x1b[31mred\x1b[0m\n");
-
     flippedBits = bit_vector_new();
 
     while(!feof(stdin)) {
