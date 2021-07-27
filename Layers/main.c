@@ -23,13 +23,13 @@ int main(void) {
 static void sender_application() {
     const int size = 1000;
 
-    char* buf = malloc(sizeof(*buf) * size);
+    char* buf = calloc(sizeof(*buf), size);
     printf("Type a message: ");
     fflush(stdout);
     fgets(buf, size, stdin);
 
     size_t len = strlen(buf);
-    if(buf[len - 1] == '\n') buf[len - 1] = '\0';
+    if(len > 0 && buf[len - 1] == '\n') buf[len - 1] = '\0';
 
     sender_application_layer(buf);
 }
