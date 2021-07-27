@@ -154,7 +154,7 @@ static void receiver_application(char* message) {
             if(isprint(ch)) {
                 fputc(message[i], stdout);
             } else {
-                printf("\x1b[31m0x%2X\x1b[0m", (uint8_t)ch);
+                printf("\x1b[31m0x%02X\x1b[0m", (uint8_t)ch);
             }
         }
     } else {
