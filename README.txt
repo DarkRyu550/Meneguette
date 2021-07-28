@@ -30,4 +30,25 @@ Os clientes precisam receber o nome como argumento. Cada cliente conecta com
 um servidor no endereço 127.0.0.1 e porta 3621, lê linhas da sua entrada padrão
 e às envia ao servidor, que retransmite para todos os clientes.
 
+##############
+# Trabalho 2 #
+##############
 
+O segundo trabalho se encontra sob o diretório "Layers/" e pode ser
+construído com o target "all" do makefile.
+Após sua construção, esse projeto produzirá um binário, "layers".
+
+O programa utiliza duas variáveis de ambiente para configuração,
+ERROR_RATE (valor, em %, de 0 a 100 de bits que serão invertidos) e
+ERROR_CHECK_MODE (modo para verificação de erro, podendo ser `parity_odd`,
+`parity_even` ou `crc32`).
+
+Ao ser iniciado, o programa lê mensagens da entrada padrão e simula o envio
+dela entre dois computadores, escrevendo na saída padrão os bits em cada
+computador, o resultado da verificação de erro e a mensagem recebida.
+
+Os bits recebidos possuem uma cor vermelha caso sejam diferentes dos bits enviados,
+para facilitar a visualização dos erros na transmissão.
+
+Caracteres não printáveis recebidos pelo segundo computador também possuem
+cor vermelha, e são representados em hexadecimal (`0xYY`).
